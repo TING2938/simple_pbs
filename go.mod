@@ -1,6 +1,6 @@
 module simple_pbs
 
-go 1.21.0
+go 1.21
 
 require github.com/containerd/cgroups v1.1.0
 

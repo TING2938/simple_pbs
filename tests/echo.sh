@@ -1,4 +1,7 @@
 
+echo "${PATH}"
+echo "${HELLO}"
+
 for (( i=0; i<100000; i++)); 
 do
     echo "hello $i"
