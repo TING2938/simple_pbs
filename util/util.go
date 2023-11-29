@@ -1,7 +1,9 @@
 package util
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"slices"
 
 	"github.com/containerd/cgroups"
@@ -30,4 +32,14 @@ func Subsystem(names []cgroups.Name) cgroups.Hierarchy {
 
 func Get_cgroup_path(task_name string) string {
 	return fmt.Sprintf("pbs_%v", task_name)
+}
+
+func Load_json(fnm string, outputData any) error {
+	fp, err := os.Open(fnm)
+	if err != nil {
+		return err
+	}
+	defer fp.Close()
+	decoder := json.NewDecoder(fp)
+	return decoder.Decode(outputData)
 }
