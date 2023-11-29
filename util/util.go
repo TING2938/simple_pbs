@@ -1,29 +1,33 @@
 package util
 
 import (
-	"log"
-	"os/exec"
-	"time"
+	"fmt"
+	"slices"
+
+	"github.com/containerd/cgroups"
 )
 
 const (
-	kb = 1024
-	mb = 1024 * kb
+	KB = 1024
+	MB = 1024 * KB
 )
 
-func Run(command string) *exec.Cmd {
-	log.Printf("[run], cmd: %s", command)
-	cmd := exec.Command("bash", "-c", command)
-
-	err := cmd.Start()
-	if err != nil {
-		log.Fatalf("Start error, %v", err)
-		return cmd
-	}
-	for {
-		if cmd.Process != nil {
-			return cmd
+func Subsystem(names []cgroups.Name) cgroups.Hierarchy {
+	return func() ([]cgroups.Subsystem, error) {
+		subsystems, err := cgroups.V1()
+		if err != nil {
+			return nil, err
 		}
-		time.Sleep(1000 * time.Microsecond)
+		var enabled []cgroups.Subsystem
+		for _, s := range subsystems {
+			if slices.Contains(names, s.Name()) {
+				enabled = append(enabled, s)
+			}
+		}
+		return enabled, nil
 	}
+}
+
+func Get_cgroup_path(task_name string) string {
+	return fmt.Sprintf("pbs_%v", task_name)
 }

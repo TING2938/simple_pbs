@@ -6,23 +6,24 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"simple_pbs/util"
 	"time"
 
 	"github.com/containerd/cgroups"
 )
 
 func main() {
-	var cgPath = flag.String("cgroup_path", "", "cg-path is cgroup path name")
-
+	var task_name = flag.String("task", "", "task name")
 	flag.Parse()
+	cgPath := util.Get_cgroup_path(*task_name)
 
 	for {
-		control, err := cgroups.Load(cgroups.V1, cgroups.StaticPath(*cgPath))
+		control, err := cgroups.Load(util.Subsystem([]cgroups.Name{cgroups.Cpu}), cgroups.StaticPath(cgPath))
 		if err != nil {
 			log.Printf("load cgroups: %v", err)
 			return
 		}
-		tasks, err := control.Tasks(cgroups.Freezer, false)
+		tasks, err := control.Tasks(cgroups.Cpu, false)
 		if err != nil {
 			log.Printf("task err: %v", err)
 			return

@@ -2,41 +2,36 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
+	"os/exec"
+	"simple_pbs/util"
 
 	"github.com/containerd/cgroups"
 	"github.com/opencontainers/runtime-spec/specs-go"
 )
 
 func main() {
+
 	var task_name = flag.String("task", "", "task name")
-	var period = flag.Uint64("cpu_period", 100000, "cpu limit value, default is 100% ")
-	var quota = flag.Int64("cpu_quota", -1, "cpu limit value, default is 100% ")
 	var cmd = flag.String("cmd", "", "your application cmd")
 
 	flag.Parse()
 
-	cgPath := fmt.Sprintf("pbs_%v", task_name)
-	control, err := cgroups.New(cgroups.V1, cgroups.StaticPath(cgPath), &specs.LinuxResources{
-		CPU: &specs.LinuxCPU{
-			Quota:  quota,
-			Period: period,
-		},
-	})
+	cgPath := util.Get_cgroup_path(*task_name)
+	control, err := cgroups.New(util.Subsystem([]cgroups.Name{cgroups.Cpu}), cgroups.StaticPath(cgPath), &specs.LinuxResources{})
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	command := run(*cmd)
-	pid := command.Process.Pid
-	if err = control.AddTask(cgroups.Process{Pid: pid}); err != nil {
+	command := exec.Command("bash", "-c", *cmd)
+	command.Start()
+	if err = control.AddTask(cgroups.Process{Pid: command.Process.Pid}); err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	tasks, err := control.Tasks(cgroups.Freezer, false)
+	tasks, err := control.Tasks(cgroups.Cpu, false)
 	if err != nil {
 		log.Fatal(err)
 	}
